@@ -3,7 +3,6 @@ import '../../css/App.css';
 import Header from './Header';
 import Rover from './Rover';
 import RoverPicker from './RoverPicker';
-import CameraPicker from './CameraPicker';
 import ApiService from '../services/ApiService';
 
 class App extends Component {
@@ -12,7 +11,8 @@ class App extends Component {
     this.state = {
       currentRoverName: null,
       rovers: {},
-      photos: {}
+      photos: {},
+      isFetching: false
     };
     console.log("calling App component constructor");
     console.log(`this.state => ${JSON.stringify(this.state)}`);
@@ -35,10 +35,11 @@ class App extends Component {
 
     if(rovers[name] === undefined) {
       console.log('rovers[name] === undefined');
+      this.setState({isFetching: true});
       this.fetchRover(name).then( newRover => {
         console.log("setRover fetch promise returning");
         rovers[name] = newRover;
-        this.setState({ currentRoverName: name, rovers: rovers });
+        this.setState({ currentRoverName: name, rovers: rovers, isFetching: false });
       });
     }
     else {
@@ -61,11 +62,7 @@ class App extends Component {
 
   fetchRover(name) {
     console.log(`calling fetchRover, name => ${name}`);
-
-    return ApiService.fetchRover(name).then( rover => {
-      console.log(`fetchRover promise returning`);
-      return rover;
-    });
+    return ApiService.fetchRover(name).then(rover => rover);
   }
 
   fetchRoverPhotos(sol, camera, limit) {
@@ -82,8 +79,11 @@ class App extends Component {
         <Header />
         <p>This will be the mars rover photos page</p>
         <RoverPicker setRover={this.setRover} />
-        <Rover rover={this.state.rovers[this.state.currentRoverName]} setRoverCamera={this.setRoverCamera} />
-        {/* <CameraPicker fetchRoverPhotos={this.fetchRoverPhotos} /> */}
+        <Rover
+          rover={this.state.rovers[this.state.currentRoverName]}
+          setRoverCamera={this.setRoverCamera}
+          isFetching={this.state.isFetching}
+        />
       </div>
     );
   }

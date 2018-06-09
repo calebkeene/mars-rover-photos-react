@@ -4,7 +4,6 @@ import ENV from '../config/environment';
 class RoverPicker extends React.Component {
   constructor(props) {
     super(props);
-    console.log('calling RoverPicker constructor');
     this.handleRoverSelection = this.handleRoverSelection.bind(this);
   }
 
