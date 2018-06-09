@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import '../../css/App.css';
 import Header from './Header';
+import Rover from './Rover';
 import RoverPicker from './RoverPicker';
 import CameraPicker from './CameraPicker';
 import ApiService from '../services/ApiService';
@@ -9,15 +10,16 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentRoverName: "",
+      currentRoverName: null,
       rovers: {},
       photos: {}
     };
-    console.log("caling App component constructor");
+    console.log("calling App component constructor");
     console.log(`this.state => ${JSON.stringify(this.state)}`);
 
     // make sure the setRover method has access to the component state
     this.setRover = this.setRover.bind(this);
+    this.setRoverCamera = this.setRoverCamera.bind(this);
   }
 
   componentDidMount() {
@@ -30,9 +32,14 @@ class App extends Component {
     console.log(this);
     console.log(`before state => ${JSON.stringify(this.state)}`);
     let rovers = this.state.rovers;
+
     if(rovers[name] === undefined) {
       console.log('rovers[name] === undefined');
-      rovers[name] = this.fetchRover(name);
+      this.fetchRover(name).then( newRover => {
+        console.log("setRover fetch promise returning");
+        rovers[name] = newRover;
+        this.setState({ currentRoverName: name, rovers: rovers });
+      });
     }
     else {
       console.log('rovers[name] !== undefined')
@@ -42,11 +49,23 @@ class App extends Component {
     this.setState({ currentRoverName: name, rovers: rovers });
   }
 
+  setRoverCamera(camera) {
+    console.log(`running setRoverCamera in App class, camera: ${camera}`);
+    let rovers = this.state.rovers;
+    let currentRoverName = this.state.currentRoverName;
+    let rover = rovers[currentRoverName];
+    rover["selectedCamera"] = camera;
+    rovers[currentRoverName] = rover;
+    this.setState({rovers: rovers});
+  }
+
   fetchRover(name) {
     console.log(`calling fetchRover, name => ${name}`);
-    return null;
-    //let rover = ApiService.fetchRover(name);
-    //return rover;
+
+    return ApiService.fetchRover(name).then( rover => {
+      console.log(`fetchRover promise returning`);
+      return rover;
+    });
   }
 
   fetchRoverPhotos(sol, camera, limit) {
@@ -54,7 +73,7 @@ class App extends Component {
       console.log("no rover currently set, returning bupkis");
       return null;
     }
-    return ApiService.fetchRoverPhotos(this.state.currentRoverName, sol, camera, limit);
+    ApiService.fetchRoverPhotos(this.state.currentRoverName, sol, camera, limit);
   }
 
   render() {
@@ -63,6 +82,7 @@ class App extends Component {
         <Header />
         <p>This will be the mars rover photos page</p>
         <RoverPicker setRover={this.setRover} />
+        <Rover rover={this.state.rovers[this.state.currentRoverName]} setRoverCamera={this.setRoverCamera} />
         {/* <CameraPicker fetchRoverPhotos={this.fetchRoverPhotos} /> */}
       </div>
     );
