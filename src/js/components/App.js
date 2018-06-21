@@ -20,6 +20,7 @@ class App extends Component {
     // make sure the setRover method has access to the component state
     this.setRover = this.setRover.bind(this);
     this.setRoverCamera = this.setRoverCamera.bind(this);
+    this.setRoverSol = this.setRoverSol.bind(this);
   }
 
   componentDidMount() {
@@ -50,6 +51,7 @@ class App extends Component {
     this.setState({ currentRoverName: name, rovers: rovers });
   }
 
+  // TODO: refactor these two methods into one as they're pretty similar
   setRoverCamera(camera) {
     console.log(`running setRoverCamera in App class, camera: ${camera}`);
     let rovers = this.state.rovers;
@@ -58,6 +60,16 @@ class App extends Component {
     rover["selectedCamera"] = camera;
     rovers[currentRoverName] = rover;
     this.setState({rovers: rovers});
+  }
+
+  setRoverSol(sol) {
+    let rovers = this.state.rovers;
+    let currentRoverName = this.state.currentRoverName;
+    let rover = rovers[currentRoverName];
+
+    rover["selectedSol"] = parseInt(sol);
+    rovers[currentRoverName] = rover;
+    this.setState(rovers);
   }
 
   fetchRover(name) {
@@ -82,6 +94,7 @@ class App extends Component {
         <Rover
           rover={this.state.rovers[this.state.currentRoverName]}
           setRoverCamera={this.setRoverCamera}
+          setRoverSol={this.setRoverSol}
           isFetching={this.state.isFetching}
         />
       </div>

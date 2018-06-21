@@ -4,6 +4,7 @@ class Rover extends React.Component {
   constructor(props) {
     super(props);
     this.handleCameraSelection = this.handleCameraSelection.bind(this);
+    this.handleSolSelection = this.handleSolSelection.bind(this);
   }
 
   handleCameraSelection(event) {
@@ -11,8 +12,11 @@ class Rover extends React.Component {
     this.props.setRoverCamera(camera);
   }
 
+  handleSolSelection(event) {
+    this.props.setRoverSol(event.target.value);
+  }
+
   render() {
-    console.log(`this.props.rover => ${JSON.stringify(this.props.rover)}`);
     if(this.props.isFetching) {
       return <p>Loading . . .</p>;
     }
@@ -41,6 +45,14 @@ class Rover extends React.Component {
                   return <option key={camera.name}>{displayName}</option>;
                 })}
               </select>
+              <p>Sol</p>
+              <input
+                onChange={this.handleSolSelection}
+                type='number'
+                min='0'
+                max={rover.max_sol}
+                placeholder={`Min: 0, max: ${rover.max_sol}`}
+              />
             </div>
           </div>
         );
