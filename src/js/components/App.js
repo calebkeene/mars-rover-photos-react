@@ -1,9 +1,12 @@
-import React, { Component } from 'react';
+import 'react-dates/initialize';
 import '../../css/App.css';
+
+import React, { Component } from 'react';
 import Header from './Header';
 import Rover from './Rover';
 import RoverPicker from './RoverPicker';
 import ApiService from '../services/ApiService';
+import moment from 'moment';
 
 class App extends Component {
   constructor(props) {
@@ -21,6 +24,7 @@ class App extends Component {
     this.setRover = this.setRover.bind(this);
     this.setRoverCamera = this.setRoverCamera.bind(this);
     this.setRoverSol = this.setRoverSol.bind(this);
+    this.setRoverPhotoDate = this.setRoverPhotoDate.bind(this);
   }
 
   componentDidMount() {
@@ -39,7 +43,10 @@ class App extends Component {
       this.setState({isFetching: true});
       this.fetchRover(name).then( newRover => {
         console.log("setRover fetch promise returning");
-        rovers[name] = newRover;
+        let rover = newRover;
+        // this will be used for the initial date in the datepicker
+        rover['selectedPhotoDate'] = newRover.landing_date;
+        rovers[name] = rover;
         this.setState({ currentRoverName: name, rovers: rovers, isFetching: false });
       });
     }
@@ -67,7 +74,17 @@ class App extends Component {
     let currentRoverName = this.state.currentRoverName;
     let rover = rovers[currentRoverName];
 
-    rover["selectedSol"] = parseInt(sol);
+    rover["selectedSol"] = parseInt(sol, 10);
+    rovers[currentRoverName] = rover;
+    this.setState(rovers);
+  }
+
+  setRoverPhotoDate(date) {
+    let rovers = this.state.rovers;
+    let currentRoverName = this.state.currentRoverName;
+    let rover = rovers[currentRoverName];
+
+    rover["selectedPhotoDate"] = date;
     rovers[currentRoverName] = rover;
     this.setState(rovers);
   }
@@ -95,6 +112,7 @@ class App extends Component {
           rover={this.state.rovers[this.state.currentRoverName]}
           setRoverCamera={this.setRoverCamera}
           setRoverSol={this.setRoverSol}
+          setRoverPhotoDate={this.setRoverPhotoDate}
           isFetching={this.state.isFetching}
         />
       </div>
