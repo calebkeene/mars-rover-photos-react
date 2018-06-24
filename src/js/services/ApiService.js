@@ -20,15 +20,23 @@ let ApiService = {
       });
   },
 // https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&camera=fhaz&api_key=6dWdXtuFW7tEPgiWYVFYf3kUxwgU77sARhf5aRtC
-  fetchRoverPhotos: function(name, sol, camera, limit) {
+  fetchRoverPhotos: function(rover, chronFilter, limit) {
     console.log('fetching rover photos');
+    let camera = rover.selectedCamera ? rover.selectedCamera : rover.cameras[0];
     var url = `
-      ${ENV.apiBaseUrl}/rovers/${name}/photos?
-      api_key=${ENV.apiKey}&sol=${sol}&camera=${camera}&
-      page=1&per_page=${limit}`;
+      ${ENV.apiBaseUrl}/rovers/${rover.name}/photos?
+      api_key=${ENV.apiKey}&camera=${camera}&
+      page=1&per_page=${limit}&${chronFilter['key']}=${chronFilter['value']}`;
 
     console.log(`url: ${url}`);
+    return fetch(url)
+      .then(response => response.json())
+      .then(responseJson => {
+        console.log(`response JSON => ${JSON.stringify(responseJson)}`);
+        return responseJson['photos'];
+      });
   }
+
 }
 
 export default ApiService;

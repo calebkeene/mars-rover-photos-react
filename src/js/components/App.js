@@ -4,6 +4,7 @@ import '../../css/App.css';
 import React, { Component } from 'react';
 import Header from './Header';
 import Rover from './Rover';
+import FetchPhotosButton from './FetchPhotosButton';
 import RoverPicker from './RoverPicker';
 import ApiService from '../services/ApiService';
 import moment from 'moment';
@@ -15,7 +16,10 @@ class App extends Component {
       currentRoverName: null,
       rovers: {},
       photos: {},
-      isFetching: false
+      isFetchingRover: false,
+      isFetchingPhotos: false,
+      showFetchPhotosButton: false,
+      fetchPhotosBy: 'earth_date'
     };
     console.log("calling App component constructor");
     console.log(`this.state => ${JSON.stringify(this.state)}`);
@@ -25,68 +29,78 @@ class App extends Component {
     this.setRoverCamera = this.setRoverCamera.bind(this);
     this.setRoverSol = this.setRoverSol.bind(this);
     this.setRoverPhotoDate = this.setRoverPhotoDate.bind(this);
+    this.setFetchPhotosBy = this.setFetchPhotosBy.bind(this);
   }
 
-  componentDidMount() {
-    console.log("Mounting App component!")
+  _getCurrentRover() {
+    let currentRoverName = this.state.currentRoverName;
+    return currentRoverName === null ? null : this.state.rovers[currentRoverName];
+  }
+
+  _updateRover(rover) {
+    let rovers = this.state.rovers;
+    rovers[rover.name] = rover;
+    this.setState({ rovers });
+    this._setFetchPhotosButtonVisibility(this.state.fetchPhotosBy);
+  }
+
+  _showFetchPhotosButton(fetchBy) {
+    let rover = this._getCurrentRover();
+    // only show the button if an API call isn't currently underway
+    if(!this.state.isFetchingRover && !this.state.isFetchingPhotos) {
+      // make sure there is both a selected earth_date/sol, and the picker is the same type\
+      if(fetchBy === 'earth_date' && rover.selectedPhotoDate) {
+        return true;
+      }
+      if(fetchBy === 'sol' && rover.selectedSol) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  _setFetchPhotosButtonVisibility(fetchBy) {
+    this.setState({ showFetchPhotosButton: this._showFetchPhotosButton(fetchBy) });
+  }
+
+  setFetchPhotosBy(fetchPhotosBy) {
+    this.setState({ fetchPhotosBy });
+    this._setFetchPhotosButtonVisibility(fetchPhotosBy);
   }
 
   setRover(name) {
-    console.log("calling setRover");
-    console.log(`name => ${name}`);
-    console.log(this);
-    console.log(`before state => ${JSON.stringify(this.state)}`);
     let rovers = this.state.rovers;
 
     if(rovers[name] === undefined) {
-      console.log('rovers[name] === undefined');
-      this.setState({isFetching: true});
+      this.setState({isFetchingRover: true});
       this.fetchRover(name).then( newRover => {
-        console.log("setRover fetch promise returning");
         let rover = newRover;
-        // this will be used for the initial date in the datepicker
-        rover['selectedPhotoDate'] = newRover.landing_date;
         rovers[name] = rover;
-        this.setState({ currentRoverName: name, rovers: rovers, isFetching: false });
+        this.setState({ currentRoverName: name, rovers: rovers, isFetchingRover: false });
       });
     }
-    else {
-      console.log('rovers[name] !== undefined')
-      console.log(rovers[name]);
-    }
-    console.log(`name => ${name}`);
     this.setState({ currentRoverName: name, rovers: rovers });
   }
 
-  // TODO: refactor these two methods into one as they're pretty similar
   setRoverCamera(camera) {
     console.log(`running setRoverCamera in App class, camera: ${camera}`);
-    let rovers = this.state.rovers;
-    let currentRoverName = this.state.currentRoverName;
-    let rover = rovers[currentRoverName];
+    let rover = this._getCurrentRover;
     rover["selectedCamera"] = camera;
-    rovers[currentRoverName] = rover;
-    this.setState({rovers: rovers});
+    this._updateRover(rover);
   }
 
   setRoverSol(sol) {
-    let rovers = this.state.rovers;
-    let currentRoverName = this.state.currentRoverName;
-    let rover = rovers[currentRoverName];
-
+    let rover = this._getCurrentRover();
     rover["selectedSol"] = parseInt(sol, 10);
-    rovers[currentRoverName] = rover;
-    this.setState(rovers);
+    this.setState({ fetchPhotosBy: 'sol' });
+    this._updateRover(rover);
   }
 
   setRoverPhotoDate(date) {
-    let rovers = this.state.rovers;
-    let currentRoverName = this.state.currentRoverName;
-    let rover = rovers[currentRoverName];
-
+    let rover = this._getCurrentRover();
     rover["selectedPhotoDate"] = date;
-    rovers[currentRoverName] = rover;
-    this.setState(rovers);
+    this.setState({ fetchPhotosBy: 'earth_date' });
+    this._updateRover(rover);
   }
 
   fetchRover(name) {
@@ -94,12 +108,32 @@ class App extends Component {
     return ApiService.fetchRover(name).then(rover => rover);
   }
 
-  fetchRoverPhotos(sol, camera, limit) {
+  fetchRoverPhotos(fetchBySol) {
     if(this.state.currentRoverName === "") {
       console.log("no rover currently set, returning bupkis");
       return null;
     }
-    ApiService.fetchRoverPhotos(this.state.currentRoverName, sol, camera, limit);
+    this.setState({isFetchingPhotos: true});
+    let rover = this._getCurrentRover();
+    let limit = 1; // may modify this later for paginating large result sets
+
+    // default to earth_date
+    let chronFilter =  {
+      key: 'earth_date',
+      value: 'selectedPhotoDate'
+    }
+    if(fetchBySol) {
+      chronFilter = {
+        key: 'sol',
+        value: 'selectedSol'
+      }
+    }
+    console.log(`chronFilter => ${JSON.stringify(chronFilter)}`);
+
+    ApiService.fetchRoverPhotos(rover, chronFilter, limit).then(photosResponse => {
+      console.log("printing photos response!");
+      console.log(JSON.stringify(photosResponse));
+    });
   }
 
   render() {
@@ -109,12 +143,16 @@ class App extends Component {
         <p>This will be the mars rover photos page</p>
         <RoverPicker setRover={this.setRover} />
         <Rover
-          rover={this.state.rovers[this.state.currentRoverName]}
+          rover={this._getCurrentRover()}
           setRoverCamera={this.setRoverCamera}
           setRoverSol={this.setRoverSol}
           setRoverPhotoDate={this.setRoverPhotoDate}
-          isFetching={this.state.isFetching}
+          setFetchPhotosBy={this.setFetchPhotosBy}
+          fetchRoverPhotos={this.fetchRoverPhotos}
+          isFetchingRover={this.state.isFetchingRover}
+          isFetchingPhotos={this.state.isFetchingPhotos}
         />
+        <FetchPhotosButton isShowing={this.state.showFetchPhotosButton} />
       </div>
     );
   }
