@@ -30,10 +30,6 @@ class Rover extends React.Component {
     this.props.setFetchPhotosBy(fetchPhotosBy);
   }
 
-  _fetchRoverPhotos() {
-    this.props.fetchRoverPhotos(this.state.showingSolSelector);
-  }
-
   setRoverSol(sol) {
     this.props.setRoverSol(sol);
   }
