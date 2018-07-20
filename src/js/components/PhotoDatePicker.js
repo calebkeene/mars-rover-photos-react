@@ -1,5 +1,6 @@
 import React from 'react';
 import 'react-dates/initialize';
+import '../../styles/css/_datepicker.css';
 import { SingleDatePicker } from 'react-dates';
 import moment from 'moment';
 

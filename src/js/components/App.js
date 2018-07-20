@@ -1,13 +1,16 @@
 import 'react-dates/initialize';
-import '../../css/App.css';
+import '../../styles/css/App.css';
 
 import React, { Component } from 'react';
 import Header from './Header';
 import Rover from './Rover';
 import RoverPhotoPanel from './RoverPhotoPanel';
 import FetchPhotosButton from './FetchPhotosButton';
+import ChangePhotoButtons from './ChangePhotoButtons';
 import RoverPicker from './RoverPicker';
 import ApiService from '../services/ApiService';
+import ComponentsDisplayHelper from '../helpers/ComponentsDisplayHelper';
+import RoverPhotosHelper from '../helpers/RoverPhotosHelper';
 import moment from 'moment';
 
 class App extends Component {
@@ -20,6 +23,8 @@ class App extends Component {
       isFetchingPhotos: false,
       showFetchPhotosButton: false,
       showRoverPhotoPanel: false,
+      showScrollPhotoButtons: false,
+      showNoPhotoResults: false,
       fetchPhotosBy: 'earth_date'
     };
     // make sure the setRover method has access to the component state
@@ -29,6 +34,7 @@ class App extends Component {
     this.setRoverPhotoDate = this.setRoverPhotoDate.bind(this);
     this.setFetchPhotosBy = this.setFetchPhotosBy.bind(this);
     this.fetchRoverPhotos = this.fetchRoverPhotos.bind(this);
+    this.changePhoto = this.changePhoto.bind(this);
   }
 
   _getCurrentRover() {
@@ -42,68 +48,25 @@ class App extends Component {
     this.setState({ rovers });
     this._setFetchPhotosButtonVisibility(this.state.fetchPhotosBy);
     this._setRoverPhotoPanelVisibility();
+    this._setScrollPhotoButtonsVisibility();
   }
 
-  _roverCurrentPhotoId(rover) {
-    let photoIds = rover.currentPhotoIds;
-    return photoIds[0];
-    // TODO: implement this when scrolling through multiple photos
-    // console.log("photoIds => " + JSON.stringify(photoIds));
-    // let currentPhotoId = rover.currentPhotoId;
-    // console.log("currentPhotoId => " + currentPhotoId);
-    // let currentArrayPosition = photoIds.indexOf(currentPhotoId);
-
-    // let lastPhotoInSet = () => {
-    //   return (currentArrayPosition + 1) > (photoIds.length -1);
-    // }
-    // console.log('lastPhotoInSet => ' + lastPhotoInSet);
-    // if (!currentPhotoId || currentArrayPosition === -1 || lastPhotoInSet ) {
-    //   return photoIds[0];
-    // }
-
-  }
-
-  _showFetchPhotosButton(fetchBy) {
+  _setScrollPhotoButtonsVisibility() {
     let rover = this._getCurrentRover();
-    // only show the button if an API call isn't currently underway
-    if(!this.state.isFetchingRover && !this.state.isFetchingPhotos) {
-      // make sure there is both a selected earth_date/sol, and the picker is the same type\
-      if(fetchBy === 'earth_date' && rover.selectedPhotoDate) {
-        return true;
-      }
-      if(fetchBy === 'sol' && rover.selectedSol) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  _showRoverPhotoPanel() {
-    let rover = this._getCurrentRover();
-    if(!rover) { return false; } // May not need this
-
-    let selectedCamera = rover.selectedCamera;
-    let selectedPhotoDate = rover.selectedPhotoDate;
-
-    if(!selectedCamera && !selectedPhotoDate) {
-      return false;
-    }
-    if (rover.photos && rover.photos[selectedCamera]) {
-      let photosByDate = rover.photos[selectedCamera][selectedPhotoDate];
-
-      if(photosByDate && Object.keys(photosByDate).length > 0) {
-        return true;
-      }
-    }
-    return false;
+    let showElement = ComponentsDisplayHelper.showScrollPhotoButtons(rover);
+    this.setState( {showScrollPhotoButtons: showElement });
   }
 
   _setRoverPhotoPanelVisibility() {
-    this.setState({ showRoverPhotoPanel: this._showRoverPhotoPanel() });
+    let rover = this._getCurrentRover();
+    let showElement = ComponentsDisplayHelper.showRoverPhotoPanel(rover);
+    this.setState({ showRoverPhotoPanel: showElement });
   }
 
   _setFetchPhotosButtonVisibility(fetchBy) {
-    this.setState({ showFetchPhotosButton: this._showFetchPhotosButton(fetchBy) });
+    let rover = this._getCurrentRover();
+    let showElement = ComponentsDisplayHelper.showFetchPhotosButton(this.state, rover, fetchBy);
+    this.setState({showFetchPhotosButton: showElement});
   }
 
   setFetchPhotosBy(fetchPhotosBy) {
@@ -127,6 +90,13 @@ class App extends Component {
       });
     }
     this.setState({ currentRoverName: name, rovers: rovers });
+  }
+
+  changePhoto(direction) {
+    console.log('changing direction => ' + direction);
+    let rover = this._getCurrentRover();
+    rover.currentPhotoId = RoverPhotosHelper.shiftRoverPhotoId(rover, direction)
+    this._updateRover(rover);
   }
 
   setRoverCamera(camera) {
@@ -185,28 +155,45 @@ class App extends Component {
 
       console.log("printing photos response!");
       console.log(JSON.stringify(photosResponse));
-      if (!rover.photos) {
-        rover.photos = {};
-      }
-      if (!rover.photos[selectedCamera]) {
-        rover.photos[selectedCamera] = {};
-      }
-      if (!rover.photos[selectedCamera][selectedPhotoDate]) {
-        rover.photos[selectedCamera][selectedPhotoDate] = {};
-      }
-      let photos = rover.photos[selectedCamera][selectedPhotoDate];
 
-      photosResponse.forEach(photoJson => {
-        let id = photoJson['id'].toString();
-        photos[id] = photoJson['img_src'];
-      });
+      if(photosResponse.length > 0) {
+        if(photosResponse.length > 1) {
+          console.log("multiple photos detected, showing buttons");
+          this.setState({ showScrollPhotoButtons: true });
+        }
+        if (!rover.photos) {
+          rover.photos = {};
+        }
+        if (!rover.photos[selectedCamera]) {
+          rover.photos[selectedCamera] = {};
+        }
+        if (!rover.photos[selectedCamera][selectedPhotoDate]) {
+          rover.photos[selectedCamera][selectedPhotoDate] = {};
+        }
+        let photos = rover.photos[selectedCamera][selectedPhotoDate];
 
-      rover.photos[selectedCamera][selectedPhotoDate] = photos;
-      // set the current range of photo ids, and the currently selected photo
-      rover.currentPhotoIds = Object.keys(rover.photos[selectedCamera][selectedPhotoDate]);
-      rover.currentPhotoId = this._roverCurrentPhotoId(rover);
+        photosResponse.forEach(photoJson => {
+          let id = photoJson['id'].toString();
+          photos[id] = photoJson['img_src'];
+        });
 
-      this._updateRover(rover);
+        rover.photos[selectedCamera][selectedPhotoDate] = photos;
+        // set the current range of photo ids, and the currently selected photo
+        rover.currentPhotoIds = Object.keys(rover.photos[selectedCamera][selectedPhotoDate]);
+        if (!rover.currentPhotoId) {
+          rover.currentPhotoId = rover.currentPhotoIds[0];
+        }
+        this._updateRover(rover);
+      }
+      else {
+        this.setState(
+          {
+            showNoPhotoResults: true,
+            showRoverPhotoPanel: false,
+            showScrollPhotoButtons: false
+          }
+        );
+      }
     });
     this.setState({ isFetchingPhotos: false });
   }
@@ -216,10 +203,11 @@ class App extends Component {
     return (
       <div className="App">
         <Header />
-        <p>This will be the mars rover photos page</p>
         <RoverPhotoPanel
           rover={rover}
           isShowing={this.state.showRoverPhotoPanel}
+          showNoPhotoResults={this.state.showNoPhotoResults}
+          fetchPhotosBy={this.state.fetchPhotosBy}
         />
         <RoverPicker setRover={this.setRover} />
         <Rover
@@ -234,6 +222,10 @@ class App extends Component {
         <FetchPhotosButton
           isShowing={this.state.showFetchPhotosButton}
           fetchRoverPhotos={this.fetchRoverPhotos}
+        />
+        <ChangePhotoButtons
+          isShowing={this.state.showScrollPhotoButtons}
+          changePhoto={this.changePhoto}
         />
       </div>
     );

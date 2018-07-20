@@ -1,0 +1,14 @@
+.rover {
+  &__photo-panel {
+    &--photo {
+      max-height: 700px;
+    }
+    &--no-results-msg {
+
+    }
+  }
+
+  &__info-table {
+    border: 1px solid;
+  }
+}

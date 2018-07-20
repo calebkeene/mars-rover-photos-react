@@ -1,7 +1,7 @@
 import React from 'react';
+import RoverInfoTable from './RoverInfoTable';
 import PhotoDatePicker from './PhotoDatePicker';
 import RoverSolSelector from './RoverSolSelector';
-import 'react-dates/initialize';
 
 class Rover extends React.Component {
   constructor(props) {
@@ -48,16 +48,7 @@ class Rover extends React.Component {
         const rover = this.props.rover;
         return (
           <React.Fragment>
-            <div>
-              <p><em>name: </em>{rover.name}</p>
-              <p><em>launch_date: </em>{rover.launch_date}</p>
-              <p><em>landing_date: </em>{rover.landing_date}</p>
-              <p><em>status: </em>{rover.status}</p>
-              <p><em>max_sol: </em>{rover.max_sol}</p>
-              <p><em>max_date: </em>{rover.max_date}</p>
-              <p><em>total_photos: </em>{rover.total_photos}</p>
-            </div>
-
+            <RoverInfoTable rover={rover} />
             <div>
               <p>Cameras</p>
               <select onChange={this._handleCameraSelection}>

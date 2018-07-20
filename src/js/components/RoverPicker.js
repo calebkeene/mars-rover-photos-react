@@ -1,5 +1,4 @@
 import React from 'react';
-import ENV from '../config/environment';
 
 class RoverPicker extends React.Component {
   constructor(props) {
