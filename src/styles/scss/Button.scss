@@ -1,0 +1,9 @@
+.button {
+  &--fetch-photos {
+    float: right;
+  }
+  &--change-photo {
+    float: right;
+    margin-left: 0.9375rem;
+  }
+}

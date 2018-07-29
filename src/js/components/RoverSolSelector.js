@@ -14,9 +14,10 @@ class RoverSolSelector extends React.Component {
     if(this.props.isShowing) {
       let rover = this.props.rover;
       return (
-        <React.Fragment>
-          <p>Sol</p>
+        <div class='rover__select--sol cell small-4 medium-3'>
+          <label for='selectSol'>Martian Sol</label>
           <input
+            name='selectSol'
             onChange={this._handleSolSelection}
             type='number'
             min='0'
@@ -24,7 +25,7 @@ class RoverSolSelector extends React.Component {
             placeholder={`Min: 0, max: ${rover.max_sol}`}
             value={rover.selectedSol || 0}
           />
-        </React.Fragment>
+        </div>
       )
     }
     else {

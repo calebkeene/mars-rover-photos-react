@@ -1,6 +1,15 @@
+.rover__button--scroll-photo {
+  margin-left: 1rem; }
+.rover__select--date input {
+  margin: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem; }
 .rover__photo-panel--photo {
-  max-height: 700px; }
+  max-height: 100%;
+  max-width: 100%; }
 .rover__info-table {
   border: 1px solid; }
+.rover__status-text {
+  margin-top: 0.5rem; }
 
 /*# sourceMappingURL=Rover.css.map */

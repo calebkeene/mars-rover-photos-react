@@ -58,9 +58,10 @@ class PhotoDatePicker extends React.Component {
       // default to the landing_date if a date isn't previously selected
       let dateToUse = rover.selectedPhotoDate ? rover.selectedPhotoDate : rover.landing_date;
       return (
-        <React.Fragment>
-          <p>Earth Date</p>
+        <div class='rover__select--date cell small-4 medium-3'>
+          <label for='selectDate'>Earth Date</label>
           <SingleDatePicker
+            name='selectDate'
             date={moment(dateToUse)}
             isOutsideRange={() => false}
             // this is REALLY slow, so disable for now
@@ -73,7 +74,7 @@ class PhotoDatePicker extends React.Component {
             small={true}
             showDefaultInputIcon
           />
-        </React.Fragment>
+        </div>
       )
     }
     else {

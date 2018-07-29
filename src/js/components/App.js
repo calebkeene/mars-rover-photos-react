@@ -1,6 +1,7 @@
 import 'react-dates/initialize';
 import '../../styles/css/App.css';
 
+// components
 import React, { Component } from 'react';
 import Header from './Header';
 import Rover from './Rover';
@@ -8,10 +9,12 @@ import RoverPhotoPanel from './RoverPhotoPanel';
 import FetchPhotosButton from './FetchPhotosButton';
 import ChangePhotoButtons from './ChangePhotoButtons';
 import RoverPicker from './RoverPicker';
+import NoPhotoResultsMsg from './NoPhotoResultsMsg';
+
+// helpers/services
 import ApiService from '../services/ApiService';
 import ComponentsDisplayHelper from '../helpers/ComponentsDisplayHelper';
 import RoverPhotosHelper from '../helpers/RoverPhotosHelper';
-import moment from 'moment';
 
 class App extends Component {
   constructor(props) {
@@ -24,7 +27,7 @@ class App extends Component {
       showFetchPhotosButton: false,
       showRoverPhotoPanel: false,
       showScrollPhotoButtons: false,
-      showNoPhotoResults: false,
+      showNoPhotoResultsMsg: false,
       fetchPhotosBy: 'earth_date'
     };
     // make sure the setRover method has access to the component state
@@ -79,15 +82,27 @@ class App extends Component {
 
     if(rovers[name] === undefined) {
       this.setState({isFetchingRover: true});
-      this.fetchRover(name).then( newRover => {
-        let rover = newRover;
-        rovers[name] = rover;
-        this.setState({ currentRoverName: name, rovers: rovers, isFetchingRover: false });
-        if(!rover['selectedCamera']) {
-          // set the first camera as default when the rover is first loaded
-          this.setRoverCamera(rover.cameras[0]['name']);
-        }
-      });
+      ApiService.fetchRover(name)
+        .then(newRover => {
+          let rover = newRover;
+          rovers[name] = rover;
+          this.setState(
+            {
+              currentRoverName: name,
+              rovers: rovers,
+              isFetchingRover: false,
+              failedToFetchRover: false
+            }
+          );
+          if (!rover['selectedCamera']) {
+            // set the first camera as default when the rover is first loaded
+            this.setRoverCamera(rover.cameras[0]['name']);
+          }
+        })
+        .catch(error => {
+          console.log(`rescuing error! error: ${error}`);
+          this.setState({ isFetchingRover: false, failedToFetchRover: true });
+        });
     }
     this.setState({ currentRoverName: name, rovers: rovers });
   }
@@ -120,11 +135,6 @@ class App extends Component {
     this._updateRover(rover);
   }
 
-  fetchRover(name) {
-    console.log(`calling fetchRover, name => ${name}`);
-    return ApiService.fetchRover(name).then(rover => rover);
-  }
-
   fetchRoverPhotos() {
     console.log("this.state => " + JSON.stringify(this.state));
     let fetchBySol = this.state.fetchPhotosBy !== 'earth_date';
@@ -153,10 +163,9 @@ class App extends Component {
       let selectedCamera = rover.selectedCamera;
       let selectedPhotoDate = rover.selectedPhotoDate;
 
-      console.log("printing photos response!");
-      console.log(JSON.stringify(photosResponse));
-
       if(photosResponse.length > 0) {
+        console.log(`returning ${photosResponse.length} photos`);
+        this.setState({ showNoPhotoResultsMsg: false });
         if(photosResponse.length > 1) {
           console.log("multiple photos detected, showing buttons");
           this.setState({ showScrollPhotoButtons: true });
@@ -188,9 +197,10 @@ class App extends Component {
       else {
         this.setState(
           {
-            showNoPhotoResults: true,
             showRoverPhotoPanel: false,
-            showScrollPhotoButtons: false
+            showScrollPhotoButtons: false,
+            showFetchPhotosButton: false,
+            showNoPhotoResultsMsg: true
           }
         );
       }
@@ -201,32 +211,40 @@ class App extends Component {
   render() {
     let rover = this._getCurrentRover();
     return (
-      <div className="App">
-        <Header />
-        <RoverPhotoPanel
-          rover={rover}
-          isShowing={this.state.showRoverPhotoPanel}
-          showNoPhotoResults={this.state.showNoPhotoResults}
-          fetchPhotosBy={this.state.fetchPhotosBy}
-        />
-        <RoverPicker setRover={this.setRover} />
-        <Rover
-          rover={this._getCurrentRover()}
-          setRoverCamera={this.setRoverCamera}
-          setRoverSol={this.setRoverSol}
-          setRoverPhotoDate={this.setRoverPhotoDate}
-          setFetchPhotosBy={this.setFetchPhotosBy}
-          isFetchingRover={this.state.isFetchingRover}
-          isFetchingPhotos={this.state.isFetchingPhotos}
-        />
-        <FetchPhotosButton
-          isShowing={this.state.showFetchPhotosButton}
-          fetchRoverPhotos={this.fetchRoverPhotos}
-        />
-        <ChangePhotoButtons
-          isShowing={this.state.showScrollPhotoButtons}
-          changePhoto={this.changePhoto}
-        />
+      <div class="App grid-container">
+        <div class='grid-x grid-margin-x'>
+          <Header />
+        </div>
+        <div class='grid-x grid-margin-x grid-margin-y'>
+          <RoverPhotoPanel
+            rover={rover}
+            isShowing={this.state.showRoverPhotoPanel}
+            fetchPhotosBy={this.state.fetchPhotosBy}
+          />
+          <RoverPicker setRover={this.setRover} />
+          <FetchPhotosButton
+            isShowing={this.state.showFetchPhotosButton}
+            fetchRoverPhotos={this.fetchRoverPhotos}
+          />
+          <NoPhotoResultsMsg
+            isShowing={this.state.showNoPhotoResultsMsg}
+            fetchPhotosBy={this.state.fetchPhotosBy}
+          />
+          <Rover
+            rover={this._getCurrentRover()}
+            setRoverCamera={this.setRoverCamera}
+            setRoverSol={this.setRoverSol}
+            setRoverPhotoDate={this.setRoverPhotoDate}
+            setFetchPhotosBy={this.setFetchPhotosBy}
+            isFetchingRover={this.state.isFetchingRover}
+            isFetchingPhotos={this.state.isFetchingPhotos}
+            failedToFetchRover={this.state.failedToFetchRover}
+          />
+          <ChangePhotoButtons
+            isShowing={this.state.showScrollPhotoButtons}
+            changePhoto={this.changePhoto}
+          />
+        </div>
       </div>
     );
   }

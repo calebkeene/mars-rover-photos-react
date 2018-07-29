@@ -12,7 +12,7 @@ class RoverPicker extends React.Component {
 
   render() {
     return (
-      <div>
+      <div class='cell small-6 medium-5 medium-offset-1'>
         <select onChange={this.handleRoverSelection}>
           <option disabled selected>Rover</option>
           <option>Spirit</option>

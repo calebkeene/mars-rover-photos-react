@@ -10,31 +10,16 @@ class RoverPhotoPicker extends React.Component {
       // TODO: dyanmically set this, selecting from all photo ids
       let selectedPhotoId = rover.currentPhotoId;
       let currentPhotoUrl = rover.photos[selectedCamera][selectedPhotoDate][selectedPhotoId];
-      return(
-        <div class='rover__photo-panel'>
-          <img class='rover__photo-panel--photo' src={currentPhotoUrl} />
-        </div>
-      );
+      return <img class='rover__photo-panel--photo cell small-12 medium-10 medium-offset-1 large-8 large-offset-2' src={currentPhotoUrl} />;
     }
     else {
-      if(this.props.showNoPhotoResults) {
-        return (
-          <React.Fragment>
-            <div class='rover__photo-panel'>
-              <img class='rover__photo-panel--photo' src={require('../../images/OSIRIS_Mars_true_color.jpg')} />
-              <p class='rover__photo-panel--no-result-msg'>No Results!</p>
-            </div>
-          </React.Fragment>
-        )
-      }
-      else {
-        // TODO: refactor this to single class
-        return (
-          <div class='rover__photo-panel'>
-            <img class='rover__panel-panel--photo' src={require('../../images/OSIRIS_Mars_true_color.jpg')} />
+      return (
+        <React.Fragment>
+          <div class='cell small-12 medium-10 medium-offset-1 rover__photo-panel'>
+            <img class='rover__photo-panel--photo' src={require('../../images/OSIRIS_Mars_true_color.jpg')} />
           </div>
-        )
-      }
+        </React.Fragment>
+      )
     }
   }
 }

@@ -41,7 +41,11 @@ class Rover extends React.Component {
 
   render() {
     if(this.props.isFetchingRover) {
-      return <p>Loading . . .</p>;
+      return(
+        <div class='cell small-6 medium-5'>
+          <p class='rover__status-text'>Loading . . .</p>
+        </div>
+      )
     }
     else {
       if (this.props.rover) {
@@ -49,9 +53,10 @@ class Rover extends React.Component {
         return (
           <React.Fragment>
             <RoverInfoTable rover={rover} />
-            <div>
-              <p>Cameras</p>
-              <select onChange={this._handleCameraSelection}>
+
+            <div class='rover__select--cameras cell small-4 medium-4 medium-offset-1'>
+              <label for='selectCamera'>Cameras</label>
+              <select name='selectCamera' onChange={this._handleCameraSelection}>
                 {rover.cameras.map(camera => {
                   let displayName = `${camera.name} (${camera.full_name})`;
                   if (rover.selectedCamera && camera.name === rover.selectedCamera) {
@@ -60,29 +65,42 @@ class Rover extends React.Component {
                   return <option key={camera.name}>{displayName}</option>;
                 })}
               </select>
+            </div>
 
-              <p>Date Filter for Camera</p>
-              <select onChange={this._toggleChronSelector}>
+            <div class='rover__select--date-type cell small-4 medium-3'>
+              <label for='selectDateType'>Photos Date Type</label>
+              <select name='selectDate' onChange={this._toggleChronSelector}>
                 <option selected key='earth_date'>Earth Date</option>
                 <option key='sol'>Sol</option>
               </select>
-
-              <RoverSolSelector
-                rover={rover}
-                isShowing={this.state.showingSolSelector}
-                setRoverSol={this.setRoverSol}
-              />
-              <PhotoDatePicker
-                rover={rover}
-                isShowing={!this.state.showingSolSelector}
-                setRoverPhotoDate={this.setRoverPhotoDate}
-              />
             </div>
+
+            <RoverSolSelector
+              rover={rover}
+              isShowing={this.state.showingSolSelector}
+              setRoverSol={this.setRoverSol}
+            />
+            <PhotoDatePicker
+              rover={rover}
+              isShowing={!this.state.showingSolSelector}
+              setRoverPhotoDate={this.setRoverPhotoDate}
+            />
           </React.Fragment>
         );
       }
+      else if(this.props.failedToFetchRover) {
+        return (
+          <div class='cell small-6 medium-5'>
+            <p class='rover__status-text'>Connection Error: Failed to retrieve Rover metadata from API</p>
+          </div>
+        )
+      }
       else {
-        return <p>No rover currently selected</p>;
+        return(
+          <div class='cell small-6 medium-5'>
+            <p class='rover__status-text'>No rover currently selected</p>
+          </div>
+        )
       }
     }
   }

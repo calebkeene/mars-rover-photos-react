@@ -4,8 +4,8 @@ class Buttons extends React.Component {
   render() {
     return (
       <div>
-        <input type='button' value='Rover' />
-        <input type='button' value='button 2' />
+        <input class='button primary' type='button' value='Rover' />
+        <input class='button secondary' type='button' value='button 2' />
       </div>
     );
   };

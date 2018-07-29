@@ -10,14 +10,18 @@ let ApiService = {
     console.log(`fetching rover ${name}`);
     var url = `${apiBaseUrl}/rovers/${name}?api_key=${apiKey}`;
     console.log(`request URL: ${url}`);
-
     return fetch(url)
-      .then(response => response.json())
-      .catch(error => console.error('Error fetching rover:', error))
-      .then(responseJson => {
-        console.log(`response JSON => ${JSON.stringify(responseJson)}`);
-        return responseJson['rover'];
-      });
+      .then(response => {
+        if(!response.ok) {
+          console.log("response !ok => throwing error")
+          throw Error(response.statusText);
+        }
+        return response.json();
+      })
+      .then(responseJson => responseJson['rover']) //{
+      //     return responseJson['rover'];
+      //   }
+      // });
   },
 // https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&camera=fhaz&api_key=6dWdXtuFW7tEPgiWYVFYf3kUxwgU77sARhf5aRtC
   fetchRoverPhotos: function(rover, chronFilter, limit) {

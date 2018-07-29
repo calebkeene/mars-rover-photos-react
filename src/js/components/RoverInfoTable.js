@@ -4,7 +4,7 @@ class RoverInfoTable extends React.Component {
   render() {
     const rover = this.props.rover;
     return(
-      <table class='rover__info-table'>
+      <table class='rover__info-table cell small-12 medium-10 medium-offset-1'>
         <thead>
           <tr>
             <th>name</th>
